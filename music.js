@@ -103,7 +103,7 @@ export const pauseMusic = () => {
 
 let sample_url;
 sample_url = "https://tonejs.github.io/audio/salamander";
-sample_url = "./dist/salamander";
+// sample_url = "./dist/salamander";
 
 const createSynth = () => {
     const musicStrategy = document.getElementById("musicStrategySelect").value;
