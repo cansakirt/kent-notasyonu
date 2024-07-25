@@ -3,539 +3,149 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Urban Morphology to Music Converter v2</title>
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+        <title>Kent Notasyonu v10</title>
+        <link rel="stylesheet" href="styles.css" />
+        <link href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" rel="stylesheet" />
+
+        <!-- <link rel="stylesheet" href="./dist/leaflet/leaflet.css" />
+        <script src="./dist/leaflet/leaflet-src.js"></script>
+        <script src="./dist/proj4.js"></script>
+        <script src="./dist/tailwinds.3.4.5.js"></script>
+        <script src="./dist/Tone.js"></script>
+        <script src="./dist/turf.min.js"></script> -->
+
+        <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/proj4@2.11.0/dist/proj4.min.js"></script>
+        <script src="http://unpkg.com/tone"></script>
         <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background: linear-gradient(to bottom right, #f0f4f8, #d9e2ec);
-                color: #2d3748;
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-                margin: 0;
-                padding: 20px;
-            }
-            .container {
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-                background-color: white;
-                border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-            #map {
-                height: 400px;
-                margin-bottom: 1.5rem;
-            }
-
-            .form-section {
-                margin-bottom: 1.5rem;
-                background-color: #f7fafc;
-                border-radius: 8px;
-                padding: 1rem;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-            .form-label {
-                display: block;
-                font-size: 1.1rem;
-                font-weight: 600;
-                margin-bottom: 0.5rem;
-                color: #4a5568;
-            }
-            .button-container {
-                display: flex;
-                justify-content: center;
-                gap: 1rem;
-                margin-top: 1.5rem;
-            }
-            .primary-button {
-                padding: 0.75rem 1.5rem;
-                background-color: #4299e1;
-                color: white;
-                border: none;
-                border-radius: 0.375rem;
-                font-size: 1.1rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: background-color 0.2s;
-            }
-            .primary-button:hover {
-                background-color: #3182ce;
-            }
-            .primary-button:disabled {
-                background-color: #a0aec0;
-                cursor: not-allowed;
-            }
-            #result {
-                margin-top: 1.5rem;
-                padding: 1rem;
-                background-color: #edf2f7;
-                border-radius: 0.375rem;
-            }
-        </style>
+        <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     </head>
-    <body>
-        <div class="container">
-            <h1 class="text-3xl font-bold text-center mb-6">Urban Morphology to Music Converter v2</h1>
-            <div id="map"></div>
-            <div class="city-container mb-4">
-                <input type="text" id="cityLoc" value="[37.2152, 28.3637]" class="p-2 border rounded" />
-                <button type="button" id="loadCityButton" class="primary-button">Load City</button>
-            </div>
-            <div class="form-section">
-                <label class="form-label" for="mainAxisOptions">Main Axis Road:</label>
-                <div id="mainAxisOptions" class="mb-4"></div>
-            </div>
-            <div style="display: none" class="flex items-center justify-center mb-4">
-                <span class="mr-2">Original</span>
-                <label class="switch">
-                    <input type="checkbox" id="playbackToggle" />
-                    <span class="slider round"></span>
-                </label>
-                <span class="ml-2">Pseudocode</span>
-            </div>
-            <div class="button-container">
-                <button type="button" id="convertButton" class="primary-button">Convert to Music</button>
-                <button type="button" id="playPauseButton" class="primary-button" disabled>Play</button>
-            </div>
-            <div id="result"></div>
+    <body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen py-8 px-4">
+        <div hidden class="absolute top-1 right-1">
+            <select
+                tabindex="-1"
+                id="displayDensity"
+                style="z-index: 1000"
+                class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+                <option value="cozy">Cozy</option>
+                <option value="comfy" selected>Comfy</option>
+                <option value="compact">Compact</option>
+            </select>
         </div>
+        <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-lg p-6 relative">
+            <div class="relative h-96 rounded-lg overflow-hidden mb-6">
+                <div id="map" class="w-full h-full"></div>
+                <div
+                    id="coordinates"
+                    class="absolute bottom-2 left-2 bg-white bg-opacity-75 text-sm text-gray-700 py-1 px-2 rounded-md shadow-md"
+                >
+                    Coordinates: <span style="font-style: italic">hover on map</span>
+                </div>
+            </div>
 
+            <div class="bg-gray-100 p-6 rounded-lg mb-6">
+                <div id="neighborhoodSelector" class="mb-6 hidden">
+                    <div class="flex items-center">
+                        <label for="neighborhoodSelect" class="font-bold text-gray-700 mr-4 whitespace-nowrap"
+                            >Select a neighborhood:</label
+                        >
+                        <select
+                            id="neighborhoodSelect"
+                            class="flex-grow p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        ></select>
+                    </div>
+                </div>
+                <div class="flex flex-col md:flex-row justify-between items-start space-y-6 md:space-y-0 md:space-x-6">
+                    <div id="musicControls" class="hidden flex-grow">
+                        <h3 class="text-lg font-bold mb-4 text-gray-800">Music Controls</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="flex items-center">
+                                    <span class="mr-2 text-gray-700 whitespace-nowrap">Tempo:</span>
+                                    <div class="flex-grow relative">
+                                        <input type="range" id="tempoRange" min="60" max="180" value="128" class="w-full" />
+                                        <div id="tempoTicks" class="absolute w-full" style="top: 20px"></div>
+                                    </div>
+                                    <span id="tempoValue" class="ml-2 text-gray-700">128</span>
+                                    <span class="ml-1 text-gray-700">BPM</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="flex items-center">
+                                    <span class="mr-2 text-gray-700 whitespace-nowrap">Music Strategy:</span>
+                                    <select
+                                        id="musicStrategySelect"
+                                        class="flex-grow p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value="default">Default Strategy</option>
+                                        <option value="polysynthOrientation">PolySynth Orientation</option>
+                                        <option value="simplePolysynth">Simple PolySynth</option>
+                                        <option value="varyingInstruments">Varying Instruments</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col space-y-4 md:border-l md:pl-6">
+                        <button
+                            type="button"
+                            id="resetButton"
+                            class="px-6 py-2 bg-red-500 text-white font-semibold rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors"
+                        >
+                            Reset
+                        </button>
+                        <button
+                            type="button"
+                            id="playPauseButton"
+                            class="px-6 py-2 bg-green-500 text-white font-semibold rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors"
+                            disabled
+                        >
+                            Play
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="result" class="bg-gray-100 p-6 rounded-lg"></div>
+        </div>
+        <script type="module" src="app.js"></script>
         <script>
-            // Constants
-            const DEFAULT_COORDINATES = [37.2152, 28.3637];
-            const MAP_ZOOM = 14;
-            const MAX_LONGEST_STREETS = 10;
-            const DIKME_LENGTH = 2000; // meters
-            const SECTIONS = 100; // number of sections to divide the main axis road into
+            function createTempoTicks() {
+                const tempoRange = document.getElementById("tempoRange");
+                const tempoTicks = document.getElementById("tempoTicks");
+                const min = parseInt(tempoRange.min);
+                const max = parseInt(tempoRange.max);
+                const step = 30; // Show a tick every 30 BPM
 
-            // State variables
-            let map;
-            let roadNetwork = [];
-            let longestStreets = [];
-            let mainAxisRoad;
-            let dikmes = [];
-            let intersections = [];
-            let musicalEvents = [];
-            let isPlaying = false;
-            let currentNoteIndex = 0;
-            let noteSequence;
-            let isPseudocodePlayback = false;
+                for (let i = min; i <= max; i += step) {
+                    const tick = document.createElement("div");
+                    tick.className = "tempo-tick";
+                    tick.style.left = `${((i - min) / (max - min)) * 100}%`;
+                    tempoTicks.appendChild(tick);
 
-            // DOM elements
-            const cityLocInput = document.getElementById("cityLoc");
-            const loadCityButton = document.getElementById("loadCityButton");
-            const convertButton = document.getElementById("convertButton");
-            const playPauseButton = document.getElementById("playPauseButton");
-            const resultDiv = document.getElementById("result");
-            const playbackToggle = document.getElementById("playbackToggle");
-
-            // Initialize the page
-            document.addEventListener("DOMContentLoaded", init);
-
-            async function init() {
-                initMap();
-                roadNetwork = await loadRoadNetworkData();
-                longestStreets = getLongestStreets(roadNetwork);
-                populateMainAxisOptions(longestStreets);
-                setupEventListeners();
-            }
-
-            function initMap() {
-                const coordinates = parseCoordinates(cityLocInput.value);
-                map = L.map("map").setView(coordinates, MAP_ZOOM);
-                L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                    attribution: "© OpenStreetMap contributors",
-                }).addTo(map);
-            }
-
-            async function loadRoadNetworkData() {
-                try {
-                    const response = await fetch("data.json");
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const data = await response.json();
-                    return data.elements.filter((el) => el.type === "way");
-                } catch (error) {
-                    console.error("Error loading road network data:", error);
-                    return [];
+                    const label = document.createElement("div");
+                    label.className = "tempo-tick-label";
+                    label.textContent = i;
+                    label.style.left = `${((i - min) / (max - min)) * 100}%`;
+                    tempoTicks.appendChild(label);
                 }
             }
 
-            function getLongestStreets(roads) {
-                return roads.sort((a, b) => b.geometry.length - a.geometry.length).slice(0, MAX_LONGEST_STREETS);
-            }
+            document.addEventListener("DOMContentLoaded", () => {
+                createTempoTicks();
 
-            function populateMainAxisOptions(streets) {
-                const optionsContainer = document.getElementById("mainAxisOptions");
-                optionsContainer.innerHTML = streets
-                    .map(
-                        (street, index) => `
-                    <button type="button" class="option-button m-1 p-2 border rounded" data-value="${index}">
-                        ${street.tags.name || `Street ${index + 1}`}
-                    </button>
-                `
-                    )
-                    .join("");
-                optionsContainer.querySelector(".option-button").classList.add("bg-blue-500", "text-white");
-            }
+                // Handle display density changes
+                const displayDensity = document.getElementById("displayDensity");
+                const container = document.querySelector(".max-w-6xl");
 
-            function setupEventListeners() {
-                loadCityButton.addEventListener("click", setMapCoords);
-                convertButton.addEventListener("click", convertToMusic);
-                playPauseButton.addEventListener("click", togglePlayPause);
-                document.querySelectorAll(".option-button").forEach((button) => {
-                    button.addEventListener("click", () => selectMainAxisRoad(button));
+                displayDensity.addEventListener("change", (e) => {
+                    container.classList.remove("density-cozy", "density-comfy", "density-compact");
+                    container.classList.add(`density-${e.target.value}`);
                 });
-                playbackToggle.addEventListener("change", (e) => {
-                    isPseudocodePlayback = e.target.checked;
-                });
-            }
+            });
 
-            function setMapCoords() {
-                try {
-                    const coordinates = parseCoordinates(cityLocInput.value);
-                    map.setView(coordinates, MAP_ZOOM);
-                } catch (error) {
-                    console.error("Error setting map coordinates:", error.message);
-                    cityLocInput.value = JSON.stringify(DEFAULT_COORDINATES);
-                }
-            }
-
-            function parseCoordinates(input) {
-                const coordinates = JSON.parse(input);
-                if (!Array.isArray(coordinates) || coordinates.length !== 2 || coordinates.some(isNaN)) {
-                    throw new Error("Invalid coordinates format. Please provide a valid array of [latitude, longitude].");
-                }
-                return coordinates;
-            }
-
-            function selectMainAxisRoad(button) {
-                document.querySelectorAll(".option-button").forEach((btn) => {
-                    btn.classList.remove("bg-blue-500", "text-white");
-                });
-                button.classList.add("bg-blue-500", "text-white");
-                mainAxisRoad = longestStreets[button.dataset.value];
-                visualizeRoadData([mainAxisRoad]);
-            }
-
-            function visualizeRoadData(data) {
-                map.eachLayer((layer) => {
-                    if (layer instanceof L.Polyline) {
-                        map.removeLayer(layer);
-                    }
-                });
-
-                const bounds = L.latLngBounds();
-                data.forEach((item) => {
-                    const coordinates = item.geometry.map((coord) => [coord.lat, coord.lon]);
-                    L.polyline(coordinates, { color: "blue", weight: 5 }).addTo(map);
-                    coordinates.forEach((coord) => bounds.extend(coord));
-                });
-
-                map.fitBounds(bounds);
-            }
-
-            function convertToMusic() {
-                if (!mainAxisRoad) {
-                    alert("Please select a main axis road before converting to music.");
-                    return;
-                }
-
-                dikmes = createDikmes(mainAxisRoad);
-                intersections = findIntersections(dikmes, roadNetwork);
-                musicalEvents = assignNotes(intersections);
-                visualizeMap(mainAxisRoad, dikmes, intersections);
-                displayResult(musicalEvents);
-                playPauseButton.disabled = false;
-            }
-
-            function createDikmes(road) {
-                const roadLength = calculateRoadLength(road);
-                const sectionLength = roadLength / SECTIONS;
-                let accumulatedLength = 0;
-                const dikmes = [];
-
-                for (let i = 0; i < road.geometry.length - 1; i++) {
-                    const start = road.geometry[i];
-                    const end = road.geometry[i + 1];
-                    const segmentLength = calculateDistance(start, end);
-
-                    while (accumulatedLength + segmentLength > sectionLength * dikmes.length) {
-                        const ratio = (sectionLength * dikmes.length - accumulatedLength) / segmentLength;
-                        const dikmePoint = {
-                            lat: start.lat + (end.lat - start.lat) * ratio,
-                            lon: start.lon + (end.lon - start.lon) * ratio,
-                        };
-                        const angle = Math.atan2(end.lat - start.lat, end.lon - start.lon) + Math.PI / 2;
-                        dikmes.push({
-                            start: {
-                                lat: dikmePoint.lat + (Math.sin(angle) * DIKME_LENGTH) / 111000,
-                                lon:
-                                    dikmePoint.lon +
-                                    (Math.cos(angle) * DIKME_LENGTH) / (111000 * Math.cos((dikmePoint.lat * Math.PI) / 180)),
-                            },
-                            end: {
-                                lat: dikmePoint.lat - (Math.sin(angle) * DIKME_LENGTH) / 111000,
-                                lon:
-                                    dikmePoint.lon -
-                                    (Math.cos(angle) * DIKME_LENGTH) / (111000 * Math.cos((dikmePoint.lat * Math.PI) / 180)),
-                            },
-                        });
-                    }
-                    accumulatedLength += segmentLength;
-                }
-
-                return dikmes;
-            }
-
-            function calculateRoadLength(road) {
-                let length = 0;
-                for (let i = 0; i < road.geometry.length - 1; i++) {
-                    length += calculateDistance(road.geometry[i], road.geometry[i + 1]);
-                }
-                return length;
-            }
-
-            function calculateDistance(point1, point2) {
-                const R = 6371000; // Earth's radius in meters
-                const lat1 = (point1.lat * Math.PI) / 180;
-                const lat2 = (point2.lat * Math.PI) / 180;
-                const dLat = ((point2.lat - point1.lat) * Math.PI) / 180;
-                const dLon = ((point2.lon - point1.lon) * Math.PI) / 180;
-
-                const a =
-                    Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-                return R * c;
-            }
-
-            function findIntersections(dikmes, allRoads) {
-                const intersections = [];
-
-                for (let i = 0; i < dikmes.length - 1; i++) {
-                    const dikme1 = dikmes[i];
-                    const dikme2 = dikmes[i + 1];
-
-                    allRoads.forEach((road) => {
-                        for (let j = 0; j < road.geometry.length - 1; j++) {
-                            const roadStart = road.geometry[j];
-                            const roadEnd = road.geometry[j + 1];
-
-                            const intersection1 = findLineIntersection(dikme1.start, dikme1.end, roadStart, roadEnd);
-                            const intersection2 = findLineIntersection(dikme2.start, dikme2.end, roadStart, roadEnd);
-
-                            if (intersection1) {
-                                addIntersection(intersections, intersection1);
-                            }
-                            if (intersection2) {
-                                addIntersection(intersections, intersection2);
-                            }
-                        }
-                    });
-                }
-
-                return intersections;
-            }
-
-            function findLineIntersection(p1, p2, p3, p4) {
-                const x1 = p1.lon,
-                    y1 = p1.lat;
-                const x2 = p2.lon,
-                    y2 = p2.lat;
-                const x3 = p3.lon,
-                    y3 = p3.lat;
-                const x4 = p4.lon,
-                    y4 = p4.lat;
-
-                const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-                if (denom === 0) return null; // parallel lines
-
-                const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
-                const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-
-                if (ua < 0 || ua > 1 || ub < 0 || ub > 1) return null; // intersection point not on line segment
-
-                return {
-                    lat: y1 + ua * (y2 - y1),
-                    lon: x1 + ua * (x2 - x1),
-                };
-            }
-
-            function addIntersection(intersections, point) {
-                const existingIntersection = intersections.find(
-                    (i) => Math.abs(i.lat - point.lat) < 1e-6 && Math.abs(i.lon - point.lon) < 1e-6
-                );
-
-                if (existingIntersection) {
-                    existingIntersection.count++;
-                } else {
-                    intersections.push({ ...point, count: 1 });
-                }
-            }
-            function assignNotes(intersections) {
-                const notes = ["E4", "F4", "G4", "A4", "B4", "C5", "D5"];
-                return intersections.map((intersection) => {
-                    const noteIndex = Math.min(intersection.count - 1, notes.length - 1);
-                    return {
-                        note: notes[noteIndex],
-                        duration: 0.5,
-                        lat: intersection.lat,
-                        lon: intersection.lon,
-                    };
-                });
-            }
-
-            function visualizeMap(mainAxisRoad, dikmes, intersections) {
-                map.eachLayer((layer) => {
-                    if (layer instanceof L.Polyline || layer instanceof L.CircleMarker) {
-                        map.removeLayer(layer);
-                    }
-                });
-
-                // Draw main axis road
-                const roadCoordinates = mainAxisRoad.geometry.map((point) => [point.lat, point.lon]);
-                L.polyline(roadCoordinates, { color: "blue", weight: 5 }).addTo(map);
-
-                // Draw dikmes
-                dikmes.forEach((dikme) => {
-                    L.polyline(
-                        [
-                            [dikme.start.lat, dikme.start.lon],
-                            [dikme.end.lat, dikme.end.lon],
-                        ],
-                        { color: "red", weight: 2, dashArray: "5, 5" }
-                    ).addTo(map);
-                });
-
-                // Prepare markers for intersections (to be displayed during playback)
-                intersections.forEach((intersection) => {
-                    L.circleMarker([intersection.lat, intersection.lon], {
-                        radius: 5,
-                        fillColor: "#ff7800",
-                        color: "#000",
-                        weight: 1,
-                        opacity: 0,
-                        fillOpacity: 0,
-                    }).addTo(map);
-                });
-
-                map.fitBounds(L.latLngBounds(roadCoordinates));
-            }
-
-            function displayResult(musicalEvents) {
-                const notationHtml = musicalEvents
-                    .map(
-                        (event, index) => `
-                    <span id="note-${index}" class="note-span" 
-                        data-lat="${event.lat}" data-lon="${event.lon}" 
-                        data-note="${event.note}" data-duration="${event.duration}">
-                        ${event.note}(${event.duration})
-                    </span>
-                `
-                    )
-                    .join(" ");
-                resultDiv.innerHTML = `
-                <h2 class="text-xl font-bold mt-4 mb-2">Generated Music Notation:</h2>
-                <p>${notationHtml}</p>
-            `;
-            }
-
-            async function togglePlayPause() {
-                if (isPlaying) {
-                    pauseMusic();
-                } else {
-                    await playMusic();
-                }
-                updatePlayPauseButton();
-            }
-
-            function updatePlayPauseButton() {
-                playPauseButton.textContent = isPlaying ? "Pause" : "Play";
-                playPauseButton.classList.toggle("bg-green-600", !isPlaying);
-                playPauseButton.classList.toggle("bg-red-600", isPlaying);
-            }
-
-            async function playMusic() {
-                if (isPlaying) return;
-
-                await Tone.start();
-                const synth = new Tone.Synth().toDestination();
-
-                if (isPseudocodePlayback) {
-                    playPseudocodeMusic(synth);
-                } else {
-                    playOriginalMusic(synth);
-                }
-
-                isPlaying = true;
-            }
-
-            function playPseudocodeMusic(synth) {
-                let index = 0;
-                const playNextNote = () => {
-                    if (index < musicalEvents.length && isPlaying) {
-                        const event = musicalEvents[index];
-                        synth.triggerAttackRelease(event.note, event.duration);
-                        highlightCurrentNote(index);
-                        index++;
-                        setTimeout(playNextNote, event.duration * 1000);
-                    } else {
-                        isPlaying = false;
-                        updatePlayPauseButton();
-                    }
-                };
-                playNextNote();
-            }
-
-            function playOriginalMusic(synth) {
-                noteSequence = new Tone.Sequence((time, span) => {
-                    const { note, duration } = span.dataset;
-                    synth.triggerAttackRelease(note, duration, time);
-                    highlightCurrentNote(currentNoteIndex);
-                    currentNoteIndex = (currentNoteIndex + 1) % noteSequence.events.length;
-                }, Array.from(document.querySelectorAll(".note-span"))).start(0);
-
-                Tone.Transport.start();
-            }
-
-            function pauseMusic() {
-                if (!isPlaying) return;
-
-                if (isPseudocodePlayback) {
-                    isPlaying = false;
-                } else {
-                    Tone.Transport.pause();
-                    noteSequence.stop();
-                }
-                isPlaying = false;
-            }
-
-            function highlightCurrentNote(index) {
-                document.querySelectorAll(".note-span").forEach((span) => span.classList.remove("bg-yellow-300"));
-                document.getElementById(`note-${index}`).classList.add("bg-yellow-300");
-
-                const noteNode = document.getElementById(`note-${index}`);
-                map.eachLayer((layer) => {
-                    if (layer instanceof L.CircleMarker) {
-                        const layerLatLng = layer.getLatLng();
-                        if (
-                            Math.abs(layerLatLng.lat - noteNode.dataset.lat) < 1e-6 &&
-                            Math.abs(layerLatLng.lng - noteNode.dataset.lon) < 1e-6
-                        ) {
-                            layer.setStyle({ opacity: 1, fillOpacity: 0.8 });
-                        } else {
-                            layer.setStyle({ opacity: 0, fillOpacity: 0 });
-                        }
-                    }
-                });
-            }
+            // Call this function when the DOM is loaded
+            document.addEventListener("DOMContentLoaded", createTempoTicks);
         </script>
     </body>
 </html>

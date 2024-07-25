@@ -1,0 +1,163 @@
+.note-span {
+    display: inline-block;
+    padding: 2px 4px;
+    margin: 2px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.note-span.active {
+    background-color: #faf089;
+}
+
+.road-highlight {
+    opacity: 1 !important;
+    stroke: #ff0000;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 4px #ff0000);
+}
+
+.road-dim {
+    opacity: 0.3;
+}
+
+#coordinates {
+    z-index: 1000;
+    pointer-events: none;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+}
+
+input[type="range"]::-ms-track {
+    width: 100%;
+    cursor: pointer;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #4299e1;
+    cursor: pointer;
+    margin-top: -5px;
+}
+
+input[type="range"]::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #4299e1;
+    cursor: pointer;
+}
+
+input[type="range"]::-ms-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #4299e1;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+input[type="range"]::-ms-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+
+input[type="range"]::-ms-fill-lower {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+input[type="range"]::-ms-fill-upper {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+.tempo-tick {
+    position: absolute;
+    width: 1px;
+    height: 5px;
+    background-color: #718096;
+    bottom: 0;
+}
+
+.tempo-tick-label {
+    position: absolute;
+    font-size: 10px;
+    color: #4a5568;
+    bottom: -15px;
+    transform: translateX(-50%);
+}
+
+/* Display Density Styles */
+.density-cozy {
+    --spacing-unit: 1.5rem;
+}
+
+.density-comfy {
+    --spacing-unit: 1rem;
+}
+
+.density-compact {
+    --spacing-unit: 0.5rem;
+}
+
+/* Apply density to specific elements */
+.density-cozy .bg-gray-100,
+.density-comfy .bg-gray-100,
+.density-compact .bg-gray-100 {
+    padding: var(--spacing-unit);
+}
+
+.density-cozy .space-y-4 > * + *,
+.density-comfy .space-y-4 > * + *,
+.density-compact .space-y-4 > * + * {
+    margin-top: var(--spacing-unit);
+}
+
+.density-cozy .mb-6,
+.density-comfy .mb-6,
+.density-compact .mb-6 {
+    margin-bottom: calc(var(--spacing-unit) * 1.5);
+}
+
+/* Visual separation for buttons */
+@media (min-width: 768px) {
+    .md\:border-l {
+        border-left-width: 2px;
+        border-left-style: solid;
+        border-left-color: #cbd5e0;
+    }
+}
